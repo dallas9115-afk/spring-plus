@@ -52,6 +52,16 @@ public class UserService {
         return imageUrl;
     }
 
+    public UserResponse getUserByNickname(String nickname) {
+        long start = System.currentTimeMillis();
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new InvalidRequestException("User not found"));
+        long elapsed = System.currentTimeMillis() - start;
+        org.slf4j.LoggerFactory.getLogger(UserService.class)
+                .info("Nickname search for '{}' took {} ms", nickname, elapsed);
+        return new UserResponse(user.getId(), user.getEmail());
+    }
+
     private static void validateNewPassword(UserChangePasswordRequest userChangePasswordRequest) {
         if (userChangePasswordRequest.getNewPassword().length() < 8 ||
                 !userChangePasswordRequest.getNewPassword().matches(".*\\d.*") ||

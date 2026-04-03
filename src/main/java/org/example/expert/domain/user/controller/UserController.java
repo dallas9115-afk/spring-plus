@@ -32,4 +32,9 @@ public class UserController {
         String imageUrl = userService.updateProfileImage(authUser.getId(), file);
         return ResponseEntity.ok(imageUrl);
     }
+
+    @GetMapping("/users/search")
+    public ResponseEntity<UserResponse> searchByNickname(@RequestParam String nickname) {
+        return ResponseEntity.ok(userService.getUserByNickname(nickname));
+    }
 }
