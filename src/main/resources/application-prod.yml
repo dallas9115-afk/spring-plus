@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: ${RDS_URL}
+    username: ${RDS_USERNAME}
+    password: ${RDS_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: false
+        format_sql: true
+
+aws:
+  region: ${AWS_REGION:ap-northeast-2}
+  access-key-id: ${AWS_ACCESS_KEY_ID:empty}
+  secret-access-key: ${AWS_SECRET_ACCESS_KEY:empty}
+  s3:
+    bucket: ${S3_BUCKET_NAME:empty}
+
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}

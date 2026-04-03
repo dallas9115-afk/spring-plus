@@ -24,4 +24,12 @@ public class UserController {
     public void changePassword(@Auth AuthUser authUser, @RequestBody UserChangePasswordRequest userChangePasswordRequest) {
         userService.changePassword(authUser.getId(), userChangePasswordRequest);
     }
+
+    @PatchMapping("/users/profile-image")
+    public ResponseEntity<String> updateProfileImage(
+            @Auth AuthUser authUser,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        String imageUrl = userService.updateProfileImage(authUser.getId(), file);
+        return ResponseEntity.ok(imageUrl);
+    }
 }
