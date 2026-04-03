@@ -34,14 +34,10 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
             NativeWebRequest webRequest,
             @Nullable WebDataBinderFactory binderFactory
     ) {
-        HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
-
-        // JwtFilter 에서 set 한 userId, email, userRole 값을 가져옴
-        Long userId = (Long) request.getAttribute("userId");
-        String email = (String) request.getAttribute("email");
-        UserRole userRole = UserRole.of((String) request.getAttribute("userRole"));
-        String nickname = (String) request.getAttribute("nickname");
-
-        return new AuthUser(userId, email, userRole, nickname);
+        org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof AuthUser) {
+            return authentication.getPrincipal();
+        }
+        return null;
     }
 }

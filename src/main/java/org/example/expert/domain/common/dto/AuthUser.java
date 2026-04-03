@@ -17,4 +17,8 @@ public class AuthUser {
         this.userRole = userRole;
         this.nickname = nickname;
     }
+
+    public java.util.Collection<? extends org.springframework.security.core.GrantedAuthority> getAuthorities() {
+        return java.util.Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority(userRole.name()));
+    }
 }
