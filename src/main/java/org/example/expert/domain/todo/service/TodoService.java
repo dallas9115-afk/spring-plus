@@ -67,6 +67,12 @@ public class TodoService {
         ));
     }
 
+    public org.springframework.data.domain.Page<org.example.expert.domain.todo.dto.response.TodoSearchResponse> searchTodos(
+            int page, int size, String title, java.time.LocalDateTime startDate, java.time.LocalDateTime endDate, String nickname) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page - 1, size);
+        return todoRepository.searchTodos(title, startDate, endDate, nickname, pageable);
+    }
+
     public TodoResponse getTodo(long todoId) {
         Todo todo = todoRepository.findByIdWithUser(todoId)
                 .orElseThrow(() -> new InvalidRequestException("Todo not found"));
