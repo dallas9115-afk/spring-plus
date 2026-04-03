@@ -17,6 +17,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final org.example.expert.domain.common.service.S3Service s3Service;
 
     public UserResponse getUser(long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new InvalidRequestException("User not found"));
@@ -39,6 +40,26 @@ public class UserService {
         }
 
         user.changePassword(passwordEncoder.encode(userChangePasswordRequest.getNewPassword()));
+    }
+
+    @Transactional
+    public String updateProfileImage(long userId, org.springframework.web.multipart.MultipartFile file) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new InvalidRequestException("User not found"));
+        
+        String imageUrl = s3Service.uploadProfileImage(file);
+        user.updateProfileImageUrl(imageUrl);
+        return imageUrl;
+    }
+
+    public UserResponse getUserByNickname(String nickname) {
+        long start = System.currentTimeMillis();
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new InvalidRequestException("User not found"));
+        long elapsed = System.currentTimeMillis() - start;
+        org.slf4j.LoggerFactory.getLogger(UserService.class)
+                .info("Nickname search for '{}' took {} ms", nickname, elapsed);
+        return new UserResponse(user.getId(), user.getEmail());
     }
 
     private static void validateNewPassword(UserChangePasswordRequest userChangePasswordRequest) {

@@ -25,6 +25,7 @@ public class TodoService {
     private final TodoRepository todoRepository;
     private final WeatherClient weatherClient;
 
+    @Transactional
     public TodoSaveResponse saveTodo(AuthUser authUser, TodoSaveRequest todoSaveRequest) {
         User user = User.fromAuthUser(authUser);
 
@@ -47,10 +48,13 @@ public class TodoService {
         );
     }
 
-    public Page<TodoResponse> getTodos(int page, int size) {
+    public Page<TodoResponse> getTodos(int page, int size, String weather, java.time.LocalDate startDate, java.time.LocalDate endDate) {
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        Page<Todo> todos = todoRepository.findAllByOrderByModifiedAtDesc(pageable);
+        java.time.LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+        java.time.LocalDateTime endDateTime = endDate != null ? endDate.atTime(java.time.LocalTime.MAX) : null;
+
+        Page<Todo> todos = todoRepository.findBySearchConditions(weather, startDateTime, endDateTime, pageable);
 
         return todos.map(todo -> new TodoResponse(
                 todo.getId(),
@@ -61,6 +65,12 @@ public class TodoService {
                 todo.getCreatedAt(),
                 todo.getModifiedAt()
         ));
+    }
+
+    public org.springframework.data.domain.Page<org.example.expert.domain.todo.dto.response.TodoSearchResponse> searchTodos(
+            int page, int size, String title, java.time.LocalDateTime startDate, java.time.LocalDateTime endDate, String nickname) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page - 1, size);
+        return todoRepository.searchTodos(title, startDate, endDate, nickname, pageable);
     }
 
     public TodoResponse getTodo(long todoId) {
