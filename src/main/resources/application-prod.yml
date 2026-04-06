@@ -23,3 +23,14 @@ aws:
 jwt:
   secret:
     key: ${JWT_SECRET_KEY}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
