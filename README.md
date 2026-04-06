@@ -14,17 +14,28 @@
 - **동적 클레임 적용**: 프론트엔드 비즈니스 로직 활용을 위해 사용자 닉네임 등 커스텀 클레임을 JWT 토큰에 포함시켰습니다.
 - **세밀한 접근 제어**: 헬스 체크(Health Check)와 같은 공개 엔드포인트와 인증이 필요한 보안 엔드포인트를 명확히 분리하여 관리합니다.
 
-### 3. AWS 인프라 및 CI/CD 파이프라인
-- **컨테이너화**: 멀티 스테이지 도커(Docker) 빌드를 도입하여 실행 이미지 용량을 최소화했습니다.
-- **자동화된 배포**: GitHub Actions를 이용하여 자동화된 테스트, Docker Hub 이미지 푸시, EC2 서버 배포를 수행합니다.
-- **스토리지 연동**: 사용자 프로필 이미지 관리를 위해 AWS S3 저장소를 통합했습니다.
-- **데이터베이스 구축**: 영속성 관리를 위해 전용 AWS RDS(MySQL 8.0) 환경을 구축했습니다.
+### 3. AWS 인프라 및 서비스 구현
+- **EC2 (Elastic Compute Cloud)**:
+  - AWS EC2 인스턴스에 애플리케이션을 배포하여 운영 중입니다.
+  - **Health Check API**: `/health` 경로를 통해 서버의 실시간 Live 상태를 확인할 수 있습니다. (누구나 접근 가능)
+- **RDS (Relational Database Service)**:
+  - AWS RDS(MySQL 8.0)를 구축하고 EC2 애플리케이션과 안정적으로 연동했습니다.
+- **S3 (Simple Storage Service)**:
+  - 유저 프로필 이미지 업로드 및 관리를 위한 API를 구현했습니다.
+  - S3 버킷을 연동하여 이미지 파일을 안전하게 보관 및 서빙합니다.
+- **CI/CD 파이프라인**: GitHub Actions를 이용하여 자동 테스트, Docker Hub 이미지 푸시, EC2 배포 자동화를 구축했습니다.
 
-### 4. 대용량 데이터 처리 (Level 13)
-- **대량 데이터 삽입**: 확장성 테스트를 목적으로 JDBC `batchUpdate` 기능을 활용해 500만 명의 사용자 데이터를 한 번에 삽입하는 데 성공했습니다.
-- **인덱스 전략 최적화**: User 테이블의 `nickname` 필드에 `idx_user_nickname` 인덱스를 설계 및 적용했습니다.
-  - **인덱스 적용 전**: 약 1.5초의 쿼리 소요 시간 발생
-  - **인덱스 적용 후**: 50ms 미만으로 조회 성능 비약적 향상
+### 4. 대용량 데이터 처리 및 성능 최적화 (Level 13)
+- **대량 데이터 삽입**: 확장성 테스트를 위해 `JdbcTemplate`의 `batchUpdate`를 활용하여 **500만 명**의 랜덤 닉네임 유저를 삽입했습니다.
+- **성능 비교 결과**:
+  | 구분 | 소요 시간 | 비고 |
+  |:---:|:---:|:---|
+  | **인덱스 미적용** | 547ms | Full Table Scan 수행 |
+  | **인덱스 적용** | 152ms | `idx_user_nickname` 활용 |
+
+- **증빙 자료**:
+  - 인덱스 미적용 결과: ![인덱스 미적용](./인덱스 전 1회차.png)
+  - 인덱스 적용 결과: ![인덱스 적용](./인덱스 1회차.png)
 
 ## 기술 스택
 - **언어**: Java 17 (Amazon Corretto)
@@ -33,14 +44,16 @@
 - **인프라**: AWS (EC2, RDS, S3), Docker, GitHub Actions, Docker Compose
 - **데이터베이스**: MySQL 8.0
 
-## 배포 가이드
+## 개발 및 테스트 가이드
 
-### 사전 준비 사항
+### 벌크 데이터 삽입 테스트 (Local)
+500만 건의 데이터를 로컬 환경에서 테스트하려면 `bulk` 프로파일을 사용하세요. 포트 충돌 방지를 위해 랜덤 포트로 구동됩니다.
+1. `src/main/resources/application-bulk.yml` 설정 확인
+2. 실행 시 Active Profiles에 `bulk` 추가
+
+### 배포 사전 준비 사항 (CI/CD)
 배포를 위해 다음 GitHub Secrets 항목들이 설정되어 있어야 합니다:
 - `RDS_URL`, `RDS_USERNAME`, `RDS_PASSWORD`
 - `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET_NAME`
 - `JWT_SECRET_KEY`, `DOCKER_USERNAME`, `DOCKER_PASSWORD`
 - `EC2_HOST`, `EC2_USERNAME`, `EC2_SSH_KEY`
-
-### 배포 실행
-`main` 또는 `feat/advanced-features-and-deployment` 브랜치에 코드를 푸시하면 자동 CI/CD 워크플로우가 트리거됩니다.
