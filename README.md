@@ -34,8 +34,10 @@
   | **인덱스 적용** | 152ms | `idx_user_nickname` 활용 |
 
 - **증빙 자료**:
-  - 인덱스 미적용 결과: ![인덱스 미적용](./인덱스 전 1회차.png)
-  - 인덱스 적용 결과: ![인덱스 적용](./인덱스 1회차.png)
+  - 인덱스 미적용 결과: <img width="559" height="368" alt="인덱스 전 1회차" src="https://github.com/user-attachments/assets/5a7a9323-bbc7-4c55-8b8e-e377d44d365f" />
+
+  - 인덱스 적용 결과: <img width="502" height="346" alt="인덱스 1회차" src="https://github.com/user-attachments/assets/51eb3bc2-9f86-4ffa-bcf9-ad5f0b844aec" />
+
 
 ## 기술 스택
 - **언어**: Java 17 (Amazon Corretto)
