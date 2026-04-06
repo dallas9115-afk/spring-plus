@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: spring-plus-bulk
+
+  datasource:
+    url: jdbc:h2:mem:bulktest;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        show_sql: false
+        format_sql: false
+    database-platform: org.hibernate.dialect.H2Dialect
+
+  h2:
+    console:
+      enabled: true
+
+jwt:
+  secret:
+    key: "dGhpc0lzQUJ1bGtUZXN0U2VjcmV0S2V5Rm9yTG9jYWxPbmx5MTIzNDU2Nzg5MA=="
+
+aws:
+  region: ap-northeast-2
+  access-key-id: dummy
+  secret-access-key: dummy
+  s3:
+    bucket: dummy
+
+server:
+  port: 0

@@ -24,8 +24,9 @@ public class WebSecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/health", "/actuator/**").permitAll()
-                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                        // /users/search 경로를 허용 목록(permitAll)에 추가합니다.
+                        .requestMatchers("/auth/", "/health", "/actuator/", "/users/search").permitAll()
+                        .requestMatchers("/admin/").hasAuthority("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtSecurityFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
