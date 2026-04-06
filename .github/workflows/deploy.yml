@@ -37,87 +37,90 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/expert-todo-backend:latest
 
-      - name: Deploy to EC2
+      - name: Prepare deployment files
+        run: |
+          mkdir -p deploy-files
+          echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" > deploy-files/.env
+          echo "RDS_URL=${{ secrets.RDS_URL }}" >> deploy-files/.env
+          echo "RDS_USERNAME=${{ secrets.RDS_USERNAME }}" >> deploy-files/.env
+          echo "RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}" >> deploy-files/.env
+          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> deploy-files/.env
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> deploy-files/.env
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> deploy-files/.env
+          echo "S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}" >> deploy-files/.env
+          echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> deploy-files/.env
+
+      - name: Create prometheus config
+        run: |
+          cat > deploy-files/prometheus.yml << 'PROM_END'
+          global:
+            scrape_interval: 15s
+            evaluation_interval: 15s
+          scrape_configs:
+            - job_name: spring-plus-backend
+              metrics_path: /actuator/prometheus
+              static_configs:
+                - targets:
+                    - spring-app:8080
+          PROM_END
+
+      - name: Create docker-compose config
+        run: |
+          cat > deploy-files/docker-compose.yml << COMPOSE_END
+          version: "3.8"
+          services:
+            spring-app:
+              image: ${{ secrets.DOCKER_USERNAME }}/expert-todo-backend:latest
+              container_name: spring-app
+              ports:
+                - "8080:8080"
+              env_file:
+                - .env
+              networks:
+                - app-network
+              restart: always
+            prometheus:
+              image: prom/prometheus
+              container_name: prometheus
+              volumes:
+                - ./prometheus.yml:/etc/prometheus/prometheus.yml
+              ports:
+                - "9090:9090"
+              networks:
+                - app-network
+              restart: always
+            grafana:
+              image: grafana/grafana
+              container_name: grafana
+              ports:
+                - "3000:3000"
+              networks:
+                - app-network
+              restart: always
+          networks:
+            app-network:
+              driver: bridge
+          COMPOSE_END
+
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "deploy-files/.env,deploy-files/prometheus.yml,deploy-files/docker-compose.yml"
+          target: "~/app"
+          strip_components: 1
+
+      - name: Deploy on EC2
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Create a directory for our deployment
-            mkdir -p ~/app
             cd ~/app
-
-            # Create a .env file from GitHub Secrets to be used by docker-compose
-            cat <<EOF > .env
-            DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
-            RDS_URL=${{ secrets.RDS_URL }}
-            RDS_USERNAME=${{ secrets.RDS_USERNAME }}
-            RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
-            AWS_REGION=${{ secrets.AWS_REGION }}
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
-            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-            EOF
-
-            # Create the prometheus.yml file on the server
-            cat <<EOF > prometheus.yml
-            global:
-              scrape_interval: 15s
-              evaluation_interval: 15s
-
-            scrape_configs:
-              - job_name: 'spring-plus-backend'
-                metrics_path: '/actuator/prometheus'
-                static_configs:
-                  - targets: ['spring-app:8080']
-            EOF
-
-            # Create the docker-compose.yml file on the server
-            cat <<EOF > docker-compose.yml
-            version: '3.8'
-            services:
-              spring-app:
-                image: \${DOCKER_USERNAME}/expert-todo-backend:latest
-                container_name: spring-app
-                ports:
-                  - "8080:8080"
-                env_file:
-                  - .env
-                networks:
-                  - app-network
-                restart: always
-
-              prometheus:
-                image: prom/prometheus
-                container_name: prometheus
-                volumes:
-                  - ./prometheus.yml:/etc/prometheus/prometheus.yml
-                ports:
-                  - "9090:9090"
-                networks:
-                  - app-network
-                restart: always
-
-              grafana:
-                image: grafana/grafana
-                container_name: grafana
-                ports:
-                  - "3000:3000"
-                networks:
-                  - app-network
-                restart: always
-
-            networks:
-              app-network:
-                driver: bridge
-            EOF
-
-            # Login and Deploy
             echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             sudo docker-compose pull
             sudo docker-compose up -d
-            
-            # Clean up unsued images
             sudo docker image prune -f
