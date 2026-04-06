@@ -63,56 +63,56 @@ jobs:
 
             # Create the prometheus.yml file on the server
             cat <<EOF > prometheus.yml
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
+            global:
+              scrape_interval: 15s
+              evaluation_interval: 15s
 
-scrape_configs:
-  - job_name: 'spring-plus-backend'
-    metrics_path: '/actuator/prometheus'
-    static_configs:
-      - targets: ['spring-app:8080']
-EOF
+            scrape_configs:
+              - job_name: 'spring-plus-backend'
+                metrics_path: '/actuator/prometheus'
+                static_configs:
+                  - targets: ['spring-app:8080']
+            EOF
 
             # Create the docker-compose.yml file on the server
             cat <<EOF > docker-compose.yml
-version: '3.8'
-services:
-  spring-app:
-    image: \${DOCKER_USERNAME}/expert-todo-backend:latest
-    container_name: spring-app
-    ports:
-      - "8080:8080"
-    env_file:
-      - .env
-    networks:
-      - app-network
-    restart: always
+            version: '3.8'
+            services:
+              spring-app:
+                image: \${DOCKER_USERNAME}/expert-todo-backend:latest
+                container_name: spring-app
+                ports:
+                  - "8080:8080"
+                env_file:
+                  - .env
+                networks:
+                  - app-network
+                restart: always
 
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
-    networks:
-      - app-network
-    restart: always
+              prometheus:
+                image: prom/prometheus
+                container_name: prometheus
+                volumes:
+                  - ./prometheus.yml:/etc/prometheus/prometheus.yml
+                ports:
+                  - "9090:9090"
+                networks:
+                  - app-network
+                restart: always
 
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    ports:
-      - "3000:3000"
-    networks:
-      - app-network
-    restart: always
+              grafana:
+                image: grafana/grafana
+                container_name: grafana
+                ports:
+                  - "3000:3000"
+                networks:
+                  - app-network
+                restart: always
 
-networks:
-  app-network:
-    driver: bridge
-EOF
+            networks:
+              app-network:
+                driver: bridge
+            EOF
 
             # Login and Deploy
             echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
