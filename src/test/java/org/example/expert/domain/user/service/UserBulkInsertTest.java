@@ -1,26 +1,34 @@
 package org.example.expert.domain.user.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
-import org.springframework.context.annotation.Profile;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.lang.NonNull;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-@Component
-@Profile("bulk")
-@RequiredArgsConstructor
-public class UserBulkInsertRunner implements ApplicationRunner {
+@SpringBootTest
+@Transactional
+@Rollback
+class UserBulkInsertTest {
 
-    private final JdbcTemplate jdbcTemplate;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private static final int TOTAL_USERS = 5_000_000;
     private static final int BATCH_SIZE = 1_000;
 
-    @Override
-    public void run(ApplicationArguments args) {
+    @Test
+    void bulkInsertUsers() {
         log.info("=== Starting bulk insert of {} users ===", TOTAL_USERS);
         long startTime = System.currentTimeMillis();
 
@@ -31,9 +39,9 @@ public class UserBulkInsertRunner implements ApplicationRunner {
             int batchEnd = Math.min(i + BATCH_SIZE, TOTAL_USERS);
             final int currentBatchSize = batchEnd - batchStart;
 
-            jdbcTemplate.batchUpdate(sql, new org.springframework.jdbc.core.BatchPreparedStatementSetter() {
+            jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
                 @Override
-                public void setValues(@org.springframework.lang.NonNull java.sql.PreparedStatement ps, int j) throws java.sql.SQLException {
+                public void setValues(@NonNull PreparedStatement ps, int j) throws SQLException {
                     int index = batchStart + j;
                     ps.setString(1, "user" + index + "@bulk.com");
                     ps.setString(2, "BulkPass1!");
@@ -54,5 +62,7 @@ public class UserBulkInsertRunner implements ApplicationRunner {
 
         long elapsed = System.currentTimeMillis() - startTime;
         log.info("=== Bulk insert completed in {} ms ({} seconds) ===", elapsed, elapsed / 1000);
+
+        assertTrue(elapsed > 0, "Bulk insert should have taken some time");
     }
 }

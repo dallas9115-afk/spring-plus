@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: spring-plus-test
+
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        show_sql: false
+        format_sql: false
+
+jwt:
+  secret:
+    key: "dGhpc0lzQVRlc3RTZWNyZXRLZXlGb3JUZXN0T25seTEyMzQ1Njc4OTA="
+
+aws:
+  region: ap-northeast-2
+  access-key-id: dummy
+  secret-access-key: dummy
+  s3:
+    bucket: dummy
