@@ -7,18 +7,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.lang.NonNull;
-import org.springframework.test.annotation.Rollback;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.AfterEach;
 
 @Slf4j
 @SpringBootTest
-@Transactional
-@Rollback
 class UserBulkInsertTest {
 
     @Autowired
@@ -26,6 +22,14 @@ class UserBulkInsertTest {
 
     private static final int TOTAL_USERS = 5_000_000;
     private static final int BATCH_SIZE = 1_000;
+
+    @AfterEach
+    void tearDown() {
+        log.info("=== Cleaning up testing DB ===");
+        jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY FALSE");
+        jdbcTemplate.execute("TRUNCATE TABLE users");
+        jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY TRUE");
+    }
 
     @Test
     void bulkInsertUsers() {
