@@ -49,9 +49,10 @@
 ## 개발 및 테스트 가이드
 
 ### 벌크 데이터 삽입 테스트 (Local)
-500만 건의 데이터를 로컬 환경에서 테스트하려면 `bulk` 프로파일을 사용하세요. 포트 충돌 방지를 위해 랜덤 포트로 구동됩니다.
-1. `src/main/resources/application-bulk.yml` 설정 확인
-2. 실행 시 Active Profiles에 `bulk` 추가
+500만 건의 대용량 데이터를 로컬 환경에서 테스트하려면 `src/test` 폴더의 JUnit 테스트를 실행하세요.
+1. `src/test/java/.../UserBulkInsertTest.java` 파일 열기
+2. `bulkInsertUsers()` 메서드 옆의 재생 버튼(▶️) 클릭
+* **참고**: 대용량 처리를 위해 Gradle 테스트 힙 메모리가 **4GB**로 최적화되어 있어, 메모리 부족 없이 완주가 가능합니다. (`build.gradle` 참조)
 
 ### 배포 사전 준비 사항 (CI/CD)
 배포를 위해 다음 GitHub Secrets 항목들이 설정되어 있어야 합니다:
